@@ -2,42 +2,58 @@ import React from "react";
 import {
   Document, Page, Text, View, StyleSheet, Font,
 } from "@react-pdf/renderer";
+import path from "path";
 import { PipelineSource, UserCard, MODES } from "./types";
 
-// Use built-in Helvetica (no font files needed)
-const styles = StyleSheet.create({
+// ── Register Sarabun (Thai-compatible font) ──
+const fontsDir = path.join(process.cwd(), "public", "fonts");
+Font.register({
+  family: "Sarabun",
+  fonts: [
+    { src: path.join(fontsDir, "Sarabun-Regular.ttf"), fontWeight: "normal" },
+    { src: path.join(fontsDir, "Sarabun-Bold.ttf"),    fontWeight: "bold" },
+  ],
+});
+
+// ── Styles ──
+const S = StyleSheet.create({
   page: {
-    fontFamily: "Helvetica",
-    fontSize: 10,
+    fontFamily: "Sarabun",
+    fontWeight: "normal",
+    fontSize: 11,
     paddingTop: 40,
-    paddingBottom: 50,
+    paddingBottom: 52,
     paddingHorizontal: 40,
     backgroundColor: "#f8f9fa",
   },
-  // ── Cover header ──
+
+  // Header
   header: {
     backgroundColor: "#111827",
     borderRadius: 8,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   headerTitle: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 20,
+    fontFamily: "Sarabun",
+    fontWeight: "bold",
+    fontSize: 22,
     color: "#ffffff",
     marginBottom: 4,
   },
   headerSub: {
-    fontSize: 10,
+    fontFamily: "Sarabun",
+    fontSize: 12,
     color: "#9ca3af",
   },
-  exportDate: {
-    fontSize: 9,
+  headerMeta: {
+    fontFamily: "Sarabun",
+    fontSize: 10,
     color: "#6b7280",
-    marginTop: 3,
+    marginTop: 4,
   },
 
-  // ── Source block ──
+  // Source block
   sourceBlock: {
     backgroundColor: "#ffffff",
     borderRadius: 8,
@@ -55,94 +71,97 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   sourceName: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 13,
+    fontFamily: "Sarabun",
+    fontWeight: "bold",
+    fontSize: 14,
     color: "#111827",
   },
   modeBadge: {
-    fontSize: 9,
-    fontFamily: "Helvetica-Bold",
-    paddingHorizontal: 8,
+    fontFamily: "Sarabun",
+    fontWeight: "bold",
+    fontSize: 10,
+    paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 20,
   },
   sourceBody: {
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
 
-  // ── Field rows ──
+  // Fields
   fieldRow: {
     flexDirection: "row",
-    marginBottom: 6,
-    gap: 6,
+    marginBottom: 7,
+    gap: 8,
   },
   fieldLabel: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 9,
+    fontFamily: "Sarabun",
+    fontWeight: "bold",
+    fontSize: 10,
     color: "#6b7280",
-    width: 100,
-    textTransform: "uppercase",
+    width: 110,
+    paddingTop: 1,
   },
   fieldValue: {
-    fontSize: 10,
+    fontFamily: "Sarabun",
+    fontSize: 11,
     color: "#374151",
     flex: 1,
+    lineHeight: 1.5,
   },
-  fieldValueEmpty: {
-    fontSize: 10,
+  fieldEmpty: {
+    fontFamily: "Sarabun",
+    fontSize: 11,
     color: "#d1d5db",
     flex: 1,
-    fontStyle: "italic",
   },
 
-  // ── Chips ──
-  chipsRow: {
+  // Chips
+  chipsWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 4,
-    marginTop: 2,
+    flex: 1,
   },
-  chip: {
+  actChip: {
     backgroundColor: "#dbeafe",
     borderRadius: 10,
-    paddingHorizontal: 6,
+    paddingHorizontal: 7,
     paddingVertical: 2,
   },
-  chipText: {
-    fontSize: 8,
+  actChipText: {
+    fontFamily: "Sarabun",
+    fontSize: 9,
     color: "#1d4ed8",
-    fontFamily: "Helvetica-Bold",
   },
   tagChip: {
     backgroundColor: "#f3f4f6",
     borderRadius: 10,
-    paddingHorizontal: 6,
+    paddingHorizontal: 7,
     paddingVertical: 2,
     border: "1pt solid #d1d5db",
   },
   tagChipText: {
-    fontSize: 8,
+    fontFamily: "Sarabun",
+    fontSize: 9,
     color: "#6b7280",
   },
 
-  // ── Divider ──
+  // Divider
   divider: {
     borderBottom: "1pt solid #f0f0f0",
-    marginVertical: 8,
+    marginVertical: 10,
   },
 
-  // ── Cards section ──
-  cardsSection: {
-    marginTop: 6,
-  },
+  // Cards section
   cardsSectionTitle: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 9,
+    fontFamily: "Sarabun",
+    fontWeight: "bold",
+    fontSize: 10,
     color: "#9ca3af",
-    textTransform: "uppercase",
-    marginBottom: 6,
-    letterSpacing: 0.5,
+    marginBottom: 7,
+    letterSpacing: 0.3,
   },
   card: {
     backgroundColor: "#f9fafb",
@@ -151,57 +170,74 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 6,
   },
+  cardTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 5,
+  },
+  cardNum: {
+    fontFamily: "Sarabun",
+    fontSize: 9,
+    color: "#9ca3af",
+  },
+  cardPerson: {
+    fontFamily: "Sarabun",
+    fontSize: 9,
+    color: "#6b7280",
+  },
   cardEntryPoint: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 10,
+    fontFamily: "Sarabun",
+    fontWeight: "bold",
+    fontSize: 12,
     color: "#1f2937",
     marginBottom: 4,
   },
-  cardModeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 4,
+  cardDataStruct: {
+    fontFamily: "Sarabun",
+    fontSize: 10,
+    color: "#4b5563",
+    marginBottom: 5,
+    lineHeight: 1.5,
+  },
+  noData: {
+    fontFamily: "Sarabun",
+    fontSize: 10,
+    color: "#d1d5db",
+    paddingVertical: 4,
   },
 
-  // ── Footer ──
+  // Footer
   footer: {
     position: "absolute",
-    bottom: 24,
+    bottom: 20,
     left: 40,
     right: 40,
     flexDirection: "row",
     justifyContent: "space-between",
     borderTop: "1pt solid #e5e7eb",
-    paddingTop: 8,
+    paddingTop: 6,
   },
   footerText: {
-    fontSize: 8,
-    color: "#9ca3af",
-  },
-
-  // ── No data ──
-  noData: {
+    fontFamily: "Sarabun",
     fontSize: 9,
-    color: "#d1d5db",
-    fontStyle: "italic",
-    paddingVertical: 4,
+    color: "#9ca3af",
   },
 });
 
-const MODE_COLORS: Record<string, { bg: string; text: string }> = {
-  paper:      { bg: "#f3f4f6", text: "#6b7280" },
-  manual:     { bg: "#fef3c7", text: "#92400e" },
+const MODE_STYLE: Record<string, { bg: string; text: string }> = {
+  paper:       { bg: "#f3f4f6", text: "#6b7280" },
+  manual:      { bg: "#fef3c7", text: "#92400e" },
   "semi-auto": { bg: "#dbeafe", text: "#1e40af" },
-  auto:       { bg: "#d1fae5", text: "#065f46" },
+  auto:        { bg: "#d1fae5", text: "#065f46" },
 };
 
 function ModeBadge({ mode }: { mode: string }) {
-  const c = MODE_COLORS[mode] ?? MODE_COLORS.paper;
+  const c = MODE_STYLE[mode] ?? MODE_STYLE.paper;
   const label = MODES.find(m => m.value === mode)?.label ?? mode;
   return (
-    <View style={[styles.modeBadge, { backgroundColor: c.bg }]}>
-      <Text style={{ color: c.text, fontSize: 9, fontFamily: "Helvetica-Bold" }}>{label}</Text>
+    <View style={[S.modeBadge, { backgroundColor: c.bg }]}>
+      <Text style={{ color: c.text, fontFamily: "Sarabun", fontWeight: "bold", fontSize: 10 }}>{label}</Text>
     </View>
   );
 }
@@ -219,61 +255,64 @@ export default function PipelinePDF({ sources, cards, exportedBy }: Props) {
   });
 
   return (
-    <Document title="Data Pipeline Board" author={exportedBy ?? "Data Pipeline Board"}>
-      <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Data Pipeline Board</Text>
-          <Text style={styles.headerSub}>แผนที่ข้อมูลและกระบวนการสำหรับทีม</Text>
-          <Text style={styles.exportDate}>
-            Export วันที่ {now}{exportedBy ? `  ·  โดย ${exportedBy}` : ""}
+    <Document title="Data Pipeline Board">
+      <Page size="A4" style={S.page}>
+
+        {/* ── Header ── */}
+        <View style={S.header}>
+          <Text style={S.headerTitle}>Data Pipeline Board</Text>
+          <Text style={S.headerSub}>แผนที่ข้อมูลและกระบวนการสำหรับทีม</Text>
+          <Text style={S.headerMeta}>
+            Export วันที่ {now}{exportedBy ? `   ·   โดย ${exportedBy}` : ""}
           </Text>
         </View>
 
-        {/* Source blocks */}
+        {/* ── Source blocks ── */}
         {sources.map(src => {
           const srcCards = cards.filter(c => c.source_key === src.source_key);
           return (
-            <View key={src.source_key} style={styles.sourceBlock} wrap={false}>
-              {/* Source header */}
-              <View style={styles.sourceHeader}>
-                <Text style={styles.sourceName}>{src.source_name}</Text>
+            <View key={src.source_key} style={S.sourceBlock} wrap={false}>
+
+              {/* Source header row */}
+              <View style={S.sourceHeader}>
+                <Text style={S.sourceName}>{src.source_name}</Text>
                 <ModeBadge mode={src.mode} />
               </View>
 
-              <View style={styles.sourceBody}>
+              <View style={S.sourceBody}>
+
                 {/* Entry Point */}
-                <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Entry Point</Text>
-                  {src.entry_point
-                    ? <Text style={styles.fieldValue}>{src.entry_point}</Text>
-                    : <Text style={styles.fieldValueEmpty}>-</Text>}
+                <View style={S.fieldRow}>
+                  <Text style={S.fieldLabel}>Entry Point</Text>
+                  <Text style={src.entry_point ? S.fieldValue : S.fieldEmpty}>
+                    {src.entry_point || "-"}
+                  </Text>
                 </View>
 
                 {/* Person */}
-                <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>ผู้รับผิดชอบ</Text>
-                  {src.entry_person
-                    ? <Text style={styles.fieldValue}>{src.entry_person}</Text>
-                    : <Text style={styles.fieldValueEmpty}>-</Text>}
+                <View style={S.fieldRow}>
+                  <Text style={S.fieldLabel}>ผู้รับผิดชอบ</Text>
+                  <Text style={src.entry_person ? S.fieldValue : S.fieldEmpty}>
+                    {src.entry_person || "-"}
+                  </Text>
                 </View>
 
                 {/* Data Structure */}
                 {src.data_structure ? (
-                  <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>โครงสร้างข้อมูล</Text>
-                    <Text style={styles.fieldValue}>{src.data_structure}</Text>
+                  <View style={S.fieldRow}>
+                    <Text style={S.fieldLabel}>โครงสร้างข้อมูล</Text>
+                    <Text style={S.fieldValue}>{src.data_structure}</Text>
                   </View>
                 ) : null}
 
                 {/* Business Activities */}
                 {(src.business_activities ?? []).length > 0 && (
-                  <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Activities</Text>
-                    <View style={[styles.chipsRow, { flex: 1 }]}>
+                  <View style={S.fieldRow}>
+                    <Text style={S.fieldLabel}>Activities</Text>
+                    <View style={S.chipsWrap}>
                       {src.business_activities.map(a => (
-                        <View key={a} style={styles.chip}>
-                          <Text style={styles.chipText}>{a}</Text>
+                        <View key={a} style={S.actChip}>
+                          <Text style={S.actChipText}>{a}</Text>
                         </View>
                       ))}
                     </View>
@@ -282,12 +321,12 @@ export default function PipelinePDF({ sources, cards, exportedBy }: Props) {
 
                 {/* System Tags */}
                 {(src.system_tags ?? []).length > 0 && (
-                  <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>ระบบที่ใช้</Text>
-                    <View style={[styles.chipsRow, { flex: 1 }]}>
+                  <View style={S.fieldRow}>
+                    <Text style={S.fieldLabel}>ระบบที่ใช้</Text>
+                    <View style={S.chipsWrap}>
                       {src.system_tags.map(t => (
-                        <View key={t} style={styles.tagChip}>
-                          <Text style={styles.tagChipText}>{t}</Text>
+                        <View key={t} style={S.tagChip}>
+                          <Text style={S.tagChipText}>{t}</Text>
                         </View>
                       ))}
                     </View>
@@ -295,70 +334,61 @@ export default function PipelinePDF({ sources, cards, exportedBy }: Props) {
                 )}
 
                 {/* Cards */}
-                {srcCards.length > 0 && (
+                {srcCards.length > 0 ? (
                   <>
-                    <View style={styles.divider} />
-                    <View style={styles.cardsSection}>
-                      <Text style={styles.cardsSectionTitle}>
-                        ข้อมูล / การ์ด ({srcCards.length} รายการ)
-                      </Text>
-                      {srcCards.map((card, i) => (
-                        <View key={card.card_id} style={styles.card}>
-                          {/* Card number + mode */}
-                          <View style={styles.cardModeRow}>
-                            <Text style={{ fontSize: 8, color: "#9ca3af" }}>#{i + 1}</Text>
-                            <ModeBadge mode={card.mode} />
-                            {card.entry_person ? (
-                              <Text style={{ fontSize: 8, color: "#6b7280" }}>👤 {card.entry_person}</Text>
-                            ) : null}
-                          </View>
-
-                          {card.entry_point ? (
-                            <Text style={styles.cardEntryPoint}>{card.entry_point}</Text>
+                    <View style={S.divider} />
+                    <Text style={S.cardsSectionTitle}>ข้อมูลที่บันทึก ({srcCards.length} รายการ)</Text>
+                    {srcCards.map((card, i) => (
+                      <View key={card.card_id} style={S.card}>
+                        <View style={S.cardTopRow}>
+                          <Text style={S.cardNum}>#{i + 1}</Text>
+                          <ModeBadge mode={card.mode} />
+                          {card.entry_person ? (
+                            <Text style={S.cardPerson}>👤 {card.entry_person}</Text>
                           ) : null}
-
-                          {card.data_structure ? (
-                            <Text style={[styles.fieldValue, { marginBottom: 4 }]}>{card.data_structure}</Text>
-                          ) : null}
-
-                          {(card.business_activities ?? []).length > 0 && (
-                            <View style={styles.chipsRow}>
-                              {card.business_activities.map(a => (
-                                <View key={a} style={styles.chip}>
-                                  <Text style={styles.chipText}>{a}</Text>
-                                </View>
-                              ))}
-                            </View>
-                          )}
-
-                          {(card.system_tags ?? []).length > 0 && (
-                            <View style={[styles.chipsRow, { marginTop: 4 }]}>
-                              {card.system_tags.map(t => (
-                                <View key={t} style={styles.tagChip}>
-                                  <Text style={styles.tagChipText}>{t}</Text>
-                                </View>
-                              ))}
-                            </View>
-                          )}
                         </View>
-                      ))}
-                    </View>
+                        {card.entry_point ? (
+                          <Text style={S.cardEntryPoint}>{card.entry_point}</Text>
+                        ) : null}
+                        {card.data_structure ? (
+                          <Text style={S.cardDataStruct}>{card.data_structure}</Text>
+                        ) : null}
+                        {(card.business_activities ?? []).length > 0 && (
+                          <View style={[S.chipsWrap, { marginBottom: 4 }]}>
+                            {card.business_activities.map(a => (
+                              <View key={a} style={S.actChip}>
+                                <Text style={S.actChipText}>{a}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+                        {(card.system_tags ?? []).length > 0 && (
+                          <View style={S.chipsWrap}>
+                            {card.system_tags.map(t => (
+                              <View key={t} style={S.tagChip}>
+                                <Text style={S.tagChipText}>{t}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+                      </View>
+                    ))}
                   </>
-                )}
-
-                {srcCards.length === 0 && (
-                  <Text style={styles.noData}>ยังไม่มีการ์ด</Text>
+                ) : (
+                  <Text style={S.noData}>ยังไม่มีข้อมูลที่บันทึก</Text>
                 )}
               </View>
             </View>
           );
         })}
 
-        {/* Footer */}
-        <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>Data Pipeline Board</Text>
-          <Text style={styles.footerText} render={({ pageNumber, totalPages }) =>
-            `หน้า ${pageNumber} / ${totalPages}`} />
+        {/* ── Footer ── */}
+        <View style={S.footer} fixed>
+          <Text style={S.footerText}>Data Pipeline Board</Text>
+          <Text
+            style={S.footerText}
+            render={({ pageNumber, totalPages }) => `หน้า ${pageNumber} / ${totalPages}`}
+          />
         </View>
       </Page>
     </Document>
