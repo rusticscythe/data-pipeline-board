@@ -1,245 +1,217 @@
 import React from "react";
-import {
-  Document, Page, Text, View, StyleSheet, Font,
-} from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
 import path from "path";
 import { PipelineSource, UserCard, MODES } from "./types";
 
-// ── Register Sarabun (Thai-compatible font) ──
+// ── Fonts ──
 const fontsDir = path.join(process.cwd(), "public", "fonts");
-Font.register({
-  family: "Sarabun",
-  fonts: [
-    { src: path.join(fontsDir, "Sarabun-Regular.ttf"), fontWeight: "normal" },
-    { src: path.join(fontsDir, "Sarabun-Bold.ttf"),    fontWeight: "bold" },
-  ],
-});
+Font.register({ family: "Sarabun",     src: path.join(fontsDir, "Sarabun-Regular.ttf") });
+Font.register({ family: "SarabunBold", src: path.join(fontsDir, "Sarabun-Bold.ttf") });
 
-// ── Styles ──
+// ── A3 Landscape dimensions (pt) ──
+// A3 = 297×420 mm → landscape = 1190 × 841 pt
+const PAGE_W = 1190;
+const PAGE_PAD = 24;
+const COL_GAP = 8;
+const NUM_COLS = 5;
+const COL_W = (PAGE_W - PAGE_PAD * 2 - COL_GAP * (NUM_COLS - 1)) / NUM_COLS; // ≈ 214pt
+
+// ── Mode colors ──
+const MODE_CLR: Record<string, { bg: string; text: string; border: string; colBg: string }> = {
+  paper:       { bg: "#F1F5F9", text: "#64748B", border: "#CBD5E1", colBg: "#F8FAFC" },
+  manual:      { bg: "#FEF3C7", text: "#92400E", border: "#FCD34D", colBg: "#FFFBEB" },
+  "semi-auto": { bg: "#DBEAFE", text: "#1D4ED8", border: "#93C5FD", colBg: "#EFF6FF" },
+  auto:        { bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7", colBg: "#F0FDF4" },
+};
+
 const S = StyleSheet.create({
   page: {
     fontFamily: "Sarabun",
-    fontWeight: "normal",
-    fontSize: 11,
-    paddingTop: 40,
-    paddingBottom: 52,
-    paddingHorizontal: 40,
-    backgroundColor: "#f8f9fa",
+    fontSize: 9,
+    backgroundColor: "#F1F5F9",
+    paddingTop: PAGE_PAD,
+    paddingBottom: PAGE_PAD,
+    paddingHorizontal: PAGE_PAD,
   },
 
-  // Header
-  header: {
-    backgroundColor: "#111827",
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontFamily: "Sarabun",
-    fontWeight: "bold",
-    fontSize: 22,
-    color: "#ffffff",
-    marginBottom: 4,
-  },
-  headerSub: {
-    fontFamily: "Sarabun",
-    fontSize: 12,
-    color: "#9ca3af",
-  },
-  headerMeta: {
-    fontFamily: "Sarabun",
-    fontSize: 10,
-    color: "#6b7280",
-    marginTop: 4,
-  },
-
-  // Source block
-  sourceBlock: {
-    backgroundColor: "#ffffff",
-    borderRadius: 8,
-    border: "1pt solid #e5e7eb",
-    marginBottom: 16,
-    overflow: "hidden",
-  },
-  sourceHeader: {
-    backgroundColor: "#f3f4f6",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderBottom: "1pt solid #e5e7eb",
+  // Top bar
+  topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    backgroundColor: "#1E293B",
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 10,
   },
-  sourceName: {
-    fontFamily: "Sarabun",
-    fontWeight: "bold",
-    fontSize: 14,
-    color: "#111827",
-  },
-  modeBadge: {
-    fontFamily: "Sarabun",
-    fontWeight: "bold",
-    fontSize: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 20,
-  },
-  sourceBody: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+  topBarTitle: { fontFamily: "SarabunBold", fontSize: 14, color: "#FFFFFF" },
+  topBarSub:   { fontFamily: "Sarabun",     fontSize: 9,  color: "#94A3B8", marginTop: 1 },
+  topBarMeta:  { fontFamily: "Sarabun",     fontSize: 8,  color: "#64748B" },
+
+  // Columns row
+  colRow: {
+    flexDirection: "row",
+    gap: COL_GAP,
+    flex: 1,
   },
 
-  // Fields
+  // Single column
+  col: {
+    width: COL_W,
+    borderRadius: 8,
+    overflow: "hidden",
+    flexDirection: "column",
+  },
+
+  // Column header
+  colHead: {
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  colHeadTitle: {
+    fontFamily: "SarabunBold",
+    fontSize: 11,
+    color: "#1E293B",
+    marginBottom: 2,
+  },
+  colHeadSub: {
+    fontFamily: "Sarabun",
+    fontSize: 8,
+    color: "#64748B",
+  },
+
+  // Source info section
+  srcSection: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderBottom: "1pt solid #E2E8F0",
+  },
   fieldRow: {
     flexDirection: "row",
-    marginBottom: 7,
-    gap: 8,
+    marginBottom: 4,
   },
   fieldLabel: {
-    fontFamily: "Sarabun",
-    fontWeight: "bold",
-    fontSize: 10,
-    color: "#6b7280",
-    width: 110,
-    paddingTop: 1,
+    fontFamily: "SarabunBold",
+    fontSize: 8,
+    color: "#94A3B8",
+    width: 72,
   },
-  fieldValue: {
+  fieldVal: {
     fontFamily: "Sarabun",
-    fontSize: 11,
+    fontSize: 8,
     color: "#374151",
     flex: 1,
     lineHeight: 1.5,
   },
-  fieldEmpty: {
+  fieldValFaint: {
     fontFamily: "Sarabun",
-    fontSize: 11,
-    color: "#d1d5db",
+    fontSize: 8,
+    color: "#CBD5E1",
     flex: 1,
-  },
-
-  // Chips
-  chipsWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 4,
-    flex: 1,
-  },
-  actChip: {
-    backgroundColor: "#dbeafe",
-    borderRadius: 10,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  actChipText: {
-    fontFamily: "Sarabun",
-    fontSize: 9,
-    color: "#1d4ed8",
-  },
-  tagChip: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 10,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    border: "1pt solid #d1d5db",
-  },
-  tagChipText: {
-    fontFamily: "Sarabun",
-    fontSize: 9,
-    color: "#6b7280",
-  },
-
-  // Divider
-  divider: {
-    borderBottom: "1pt solid #f0f0f0",
-    marginVertical: 10,
   },
 
   // Cards section
-  cardsSectionTitle: {
-    fontFamily: "Sarabun",
-    fontWeight: "bold",
-    fontSize: 10,
-    color: "#9ca3af",
-    marginBottom: 7,
+  cardsSection: {
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
+    flex: 1,
+  },
+  cardsSectionLabel: {
+    fontFamily: "SarabunBold",
+    fontSize: 7,
+    color: "#94A3B8",
+    marginBottom: 5,
     letterSpacing: 0.3,
   },
-  card: {
-    backgroundColor: "#f9fafb",
-    border: "1pt solid #e5e7eb",
-    borderRadius: 6,
-    padding: 10,
-    marginBottom: 6,
+
+  // Card item
+  cardItem: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 5,
+    border: "1pt solid #E2E8F0",
+    paddingHorizontal: 8,
+    paddingVertical: 7,
+    marginBottom: 5,
   },
   cardTopRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 5,
+    marginBottom: 4,
+    gap: 4,
   },
   cardNum: {
     fontFamily: "Sarabun",
-    fontSize: 9,
-    color: "#9ca3af",
+    fontSize: 7,
+    color: "#CBD5E1",
+  },
+  modePill: {
+    fontFamily: "SarabunBold",
+    fontSize: 7,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
   cardPerson: {
     fontFamily: "Sarabun",
+    fontSize: 7,
+    color: "#64748B",
+    flex: 1,
+  },
+  cardTitle: {
+    fontFamily: "SarabunBold",
     fontSize: 9,
-    color: "#6b7280",
+    color: "#1E293B",
+    marginBottom: 3,
   },
-  cardEntryPoint: {
+  cardBody: {
     fontFamily: "Sarabun",
-    fontWeight: "bold",
-    fontSize: 12,
-    color: "#1f2937",
-    marginBottom: 4,
-  },
-  cardDataStruct: {
-    fontFamily: "Sarabun",
-    fontSize: 10,
-    color: "#4b5563",
-    marginBottom: 5,
+    fontSize: 8,
+    color: "#475569",
     lineHeight: 1.5,
+    marginBottom: 3,
   },
-  noData: {
+  tagsText: {
     fontFamily: "Sarabun",
-    fontSize: 10,
-    color: "#d1d5db",
+    fontSize: 7.5,
+    color: "#2563EB",
+    marginBottom: 2,
+  },
+  sysText: {
+    fontFamily: "Sarabun",
+    fontSize: 7.5,
+    color: "#64748B",
+  },
+  noCard: {
+    fontFamily: "Sarabun",
+    fontSize: 8,
+    color: "#CBD5E1",
     paddingVertical: 4,
   },
 
   // Footer
   footer: {
     position: "absolute",
-    bottom: 20,
-    left: 40,
-    right: 40,
+    bottom: 10,
+    left: PAGE_PAD,
+    right: PAGE_PAD,
     flexDirection: "row",
     justifyContent: "space-between",
-    borderTop: "1pt solid #e5e7eb",
-    paddingTop: 6,
   },
   footerText: {
     fontFamily: "Sarabun",
-    fontSize: 9,
-    color: "#9ca3af",
+    fontSize: 7,
+    color: "#CBD5E1",
   },
 });
 
-const MODE_STYLE: Record<string, { bg: string; text: string }> = {
-  paper:       { bg: "#f3f4f6", text: "#6b7280" },
-  manual:      { bg: "#fef3c7", text: "#92400e" },
-  "semi-auto": { bg: "#dbeafe", text: "#1e40af" },
-  auto:        { bg: "#d1fae5", text: "#065f46" },
-};
-
-function ModeBadge({ mode }: { mode: string }) {
-  const c = MODE_STYLE[mode] ?? MODE_STYLE.paper;
-  const label = MODES.find(m => m.value === mode)?.label ?? mode;
-  return (
-    <View style={[S.modeBadge, { backgroundColor: c.bg }]}>
-      <Text style={{ color: c.text, fontFamily: "Sarabun", fontWeight: "bold", fontSize: 10 }}>{label}</Text>
-    </View>
-  );
+function modeLabel(mode: string) {
+  return MODES.find(m => m.value === mode)?.label ?? mode;
 }
 
 interface Props {
@@ -256,138 +228,136 @@ export default function PipelinePDF({ sources, cards, exportedBy }: Props) {
 
   return (
     <Document title="Data Pipeline Board">
-      <Page size="A4" style={S.page}>
-
-        {/* ── Header ── */}
-        <View style={S.header}>
-          <Text style={S.headerTitle}>Data Pipeline Board</Text>
-          <Text style={S.headerSub}>แผนที่ข้อมูลและกระบวนการสำหรับทีม</Text>
-          <Text style={S.headerMeta}>
-            Export วันที่ {now}{exportedBy ? `   ·   โดย ${exportedBy}` : ""}
+      <Page
+        size="A3"
+        orientation="landscape"
+        style={S.page}
+      >
+        {/* ── Top bar ── */}
+        <View style={S.topBar}>
+          <View>
+            <Text style={S.topBarTitle}>Data Pipeline Board</Text>
+            <Text style={S.topBarSub}>แผนที่ข้อมูลและกระบวนการสำหรับทีม</Text>
+          </View>
+          <Text style={S.topBarMeta}>
+            Export: {now}{exportedBy ? `   |   โดย: ${exportedBy}` : ""}
           </Text>
         </View>
 
-        {/* ── Source blocks ── */}
-        {sources.map(src => {
-          const srcCards = cards.filter(c => c.source_key === src.source_key);
-          return (
-            <View key={src.source_key} style={S.sourceBlock} wrap={false}>
+        {/* ── 5 Columns ── */}
+        <View style={S.colRow}>
+          {sources.map(src => {
+            const srcCards = cards.filter(c => c.source_key === src.source_key);
+            const clr = MODE_CLR[src.mode] ?? MODE_CLR.paper;
+            const acts  = (src.business_activities ?? []).join(" · ");
+            const tags  = (src.system_tags ?? []).join(" · ");
 
-              {/* Source header row */}
-              <View style={S.sourceHeader}>
-                <Text style={S.sourceName}>{src.source_name}</Text>
-                <ModeBadge mode={src.mode} />
-              </View>
+            return (
+              <View key={src.source_key} style={[S.col, { backgroundColor: clr.colBg, border: `1pt solid ${clr.border}` }]}>
 
-              <View style={S.sourceBody}>
-
-                {/* Entry Point */}
-                <View style={S.fieldRow}>
-                  <Text style={S.fieldLabel}>Entry Point</Text>
-                  <Text style={src.entry_point ? S.fieldValue : S.fieldEmpty}>
-                    {src.entry_point || "-"}
-                  </Text>
+                {/* Column header */}
+                <View style={[S.colHead, { backgroundColor: clr.bg }]}>
+                  <Text style={S.colHeadTitle}>{src.source_name}</Text>
+                  <Text style={S.colHeadSub}>{srcCards.length} การ์ด</Text>
                 </View>
 
-                {/* Person */}
-                <View style={S.fieldRow}>
-                  <Text style={S.fieldLabel}>ผู้รับผิดชอบ</Text>
-                  <Text style={src.entry_person ? S.fieldValue : S.fieldEmpty}>
-                    {src.entry_person || "-"}
-                  </Text>
+                {/* Source info */}
+                <View style={S.srcSection}>
+                  <View style={S.fieldRow}>
+                    <Text style={S.fieldLabel}>Entry Point</Text>
+                    <Text style={src.entry_point ? S.fieldVal : S.fieldValFaint}>
+                      {src.entry_point || "-"}
+                    </Text>
+                  </View>
+                  <View style={S.fieldRow}>
+                    <Text style={S.fieldLabel}>ผู้รับผิดชอบ</Text>
+                    <Text style={src.entry_person ? S.fieldVal : S.fieldValFaint}>
+                      {src.entry_person || "-"}
+                    </Text>
+                  </View>
+                  {src.data_structure ? (
+                    <View style={S.fieldRow}>
+                      <Text style={S.fieldLabel}>โครงสร้าง</Text>
+                      <Text style={S.fieldVal}>{src.data_structure}</Text>
+                    </View>
+                  ) : null}
+                  {acts ? (
+                    <View style={S.fieldRow}>
+                      <Text style={S.fieldLabel}>Activities</Text>
+                      <Text style={[S.fieldVal, { color: "#2563EB" }]}>{acts}</Text>
+                    </View>
+                  ) : null}
+                  {tags ? (
+                    <View style={S.fieldRow}>
+                      <Text style={S.fieldLabel}>ระบบ</Text>
+                      <Text style={[S.fieldVal, { color: "#64748B" }]}>{tags}</Text>
+                    </View>
+                  ) : null}
                 </View>
-
-                {/* Data Structure */}
-                {src.data_structure ? (
-                  <View style={S.fieldRow}>
-                    <Text style={S.fieldLabel}>โครงสร้างข้อมูล</Text>
-                    <Text style={S.fieldValue}>{src.data_structure}</Text>
-                  </View>
-                ) : null}
-
-                {/* Business Activities */}
-                {(src.business_activities ?? []).length > 0 && (
-                  <View style={S.fieldRow}>
-                    <Text style={S.fieldLabel}>Activities</Text>
-                    <View style={S.chipsWrap}>
-                      {src.business_activities.map(a => (
-                        <View key={a} style={S.actChip}>
-                          <Text style={S.actChipText}>{a}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
-
-                {/* System Tags */}
-                {(src.system_tags ?? []).length > 0 && (
-                  <View style={S.fieldRow}>
-                    <Text style={S.fieldLabel}>ระบบที่ใช้</Text>
-                    <View style={S.chipsWrap}>
-                      {src.system_tags.map(t => (
-                        <View key={t} style={S.tagChip}>
-                          <Text style={S.tagChipText}>{t}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
 
                 {/* Cards */}
-                {srcCards.length > 0 ? (
-                  <>
-                    <View style={S.divider} />
-                    <Text style={S.cardsSectionTitle}>ข้อมูลที่บันทึก ({srcCards.length} รายการ)</Text>
-                    {srcCards.map((card, i) => (
-                      <View key={card.card_id} style={S.card}>
-                        <View style={S.cardTopRow}>
-                          <Text style={S.cardNum}>#{i + 1}</Text>
-                          <ModeBadge mode={card.mode} />
-                          {card.entry_person ? (
-                            <Text style={S.cardPerson}>👤 {card.entry_person}</Text>
-                          ) : null}
-                        </View>
-                        {card.entry_point ? (
-                          <Text style={S.cardEntryPoint}>{card.entry_point}</Text>
-                        ) : null}
-                        {card.data_structure ? (
-                          <Text style={S.cardDataStruct}>{card.data_structure}</Text>
-                        ) : null}
-                        {(card.business_activities ?? []).length > 0 && (
-                          <View style={[S.chipsWrap, { marginBottom: 4 }]}>
-                            {card.business_activities.map(a => (
-                              <View key={a} style={S.actChip}>
-                                <Text style={S.actChipText}>{a}</Text>
+                <View style={S.cardsSection}>
+                  {srcCards.length === 0 ? (
+                    <Text style={S.noCard}>ยังไม่มีข้อมูล</Text>
+                  ) : (
+                    <>
+                      <Text style={S.cardsSectionLabel}>ข้อมูลที่บันทึก</Text>
+                      {srcCards.map((card, i) => {
+                        const cClr = MODE_CLR[card.mode] ?? MODE_CLR.paper;
+                        const cActs = (card.business_activities ?? []).join(" · ");
+                        const cTags = (card.system_tags ?? []).join(" · ");
+                        return (
+                          <View key={card.card_id} style={S.cardItem}>
+                            {/* Top row: number + mode + person */}
+                            <View style={S.cardTopRow}>
+                              <Text style={S.cardNum}>#{i + 1}</Text>
+                              <View style={[S.modePill, { backgroundColor: cClr.bg }]}>
+                                <Text style={{ color: cClr.text, fontFamily: "SarabunBold", fontSize: 7 }}>
+                                  {modeLabel(card.mode)}
+                                </Text>
                               </View>
-                            ))}
+                              {card.entry_person ? (
+                                <Text style={S.cardPerson}>{card.entry_person}</Text>
+                              ) : null}
+                            </View>
+
+                            {/* Entry point = title */}
+                            {card.entry_point ? (
+                              <Text style={S.cardTitle}>{card.entry_point}</Text>
+                            ) : null}
+
+                            {/* Data structure */}
+                            {card.data_structure ? (
+                              <Text style={S.cardBody}>{card.data_structure}</Text>
+                            ) : null}
+
+                            {/* Activities as plain text */}
+                            {cActs ? (
+                              <Text style={S.tagsText}>{cActs}</Text>
+                            ) : null}
+
+                            {/* System tags as plain text */}
+                            {cTags ? (
+                              <Text style={S.sysText}>{cTags}</Text>
+                            ) : null}
                           </View>
-                        )}
-                        {(card.system_tags ?? []).length > 0 && (
-                          <View style={S.chipsWrap}>
-                            {card.system_tags.map(t => (
-                              <View key={t} style={S.tagChip}>
-                                <Text style={S.tagChipText}>{t}</Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
-                      </View>
-                    ))}
-                  </>
-                ) : (
-                  <Text style={S.noData}>ยังไม่มีข้อมูลที่บันทึก</Text>
-                )}
+                        );
+                      })}
+                    </>
+                  )}
+                </View>
               </View>
-            </View>
-          );
-        })}
+            );
+          })}
+        </View>
 
         {/* ── Footer ── */}
         <View style={S.footer} fixed>
           <Text style={S.footerText}>Data Pipeline Board</Text>
           <Text
             style={S.footerText}
-            render={({ pageNumber, totalPages }) => `หน้า ${pageNumber} / ${totalPages}`}
+            render={({ pageNumber, totalPages }) =>
+              totalPages > 1 ? `หน้า ${pageNumber} / ${totalPages}` : ""}
           />
         </View>
       </Page>
